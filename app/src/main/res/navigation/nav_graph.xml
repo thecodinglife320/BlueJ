@@ -9,5 +9,17 @@
         android:id="@+id/gamesFragment"
         android:name="com.project.ad.bluej.GamesFragment"
         android:label="fragment_games"
-        tools:layout="@layout/fragment_games" />
+        tools:layout="@layout/fragment_games" >
+        <action
+            android:id="@+id/action_gamesFragment_to_gameInfoActivity"
+            app:destination="@id/gameInfoActivity" />
+    </fragment>
+    <activity
+        android:id="@+id/gameInfoActivity"
+        android:name="com.project.ad.bluej.GameInfoActivity"
+        android:label="GameInfoActivity" >
+        <argument
+            android:name="idGame"
+            app:argType="string" />
+    </activity>
 </navigation>

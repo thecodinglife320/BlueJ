@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">BlueJ</string>
+    <string name="average_time">Playtime: %d hours</string>
+    <string name="ratings">Ratings</string>
 </resources>

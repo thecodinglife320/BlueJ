@@ -1,10 +1,16 @@
 package com.project.ad.bluej
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.get
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -40,6 +46,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
    private lateinit var binding: ActivityMainBinding
@@ -51,8 +60,7 @@ class MainActivity : AppCompatActivity() {
       setContentView(binding.root)
       binding.searchView.setupWithSearchBar(binding.searchBar)
 
-      val navHostFragment =
-         supportFragmentManager.findFragmentById(R.id.host_nav_games) as NavHostFragment
+      val navHostFragment = supportFragmentManager.findFragmentById(R.id.host_nav_games) as NavHostFragment
       val navController = navHostFragment.navController
       val appBarConfiguration = AppBarConfiguration(navController.graph)
       NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration)
@@ -81,7 +89,6 @@ class GameInfoActivity:AppCompatActivity(){
       binding.viewmodel = viewModel
       binding.lifecycleOwner = this
       viewModel.getGameDetail(args.idGame)
-      println(viewModel.hashCode())
    }
 }
 
@@ -243,19 +250,72 @@ class GameDetailFragment : Fragment() {
       return binding.root
    }
 
+   @SuppressLint("SetTextI18n")
    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
       super.onViewCreated(view, savedInstanceState)
 
       viewModel.gameDetail.observe(viewLifecycleOwner) {
          binding.gameDetail = it
          (requireActivity() as AppCompatActivity ).supportActionBar?.title = it.name_original
+         it.released?.let { released -> binding.releaseDateTv.text = formatString(released) }
+
+         it.playtime?.let { playtime -> binding.averagePlayTimeTv.text = requireContext().getString(R.string.average_time,playtime) }
+
+         it.parent_platforms?.forEach {platform->
+            run {
+               val imageView = ImageView(requireContext()).apply {
+                  val layoutParams = LinearLayout.LayoutParams(
+                     LinearLayout.LayoutParams.WRAP_CONTENT,
+                     LinearLayout.LayoutParams.WRAP_CONTENT
+                  )
+                  layoutParams.marginEnd = 20
+                  setLayoutParams(layoutParams)
+               }
+               when(platform.platform?.id){
+                  1->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.pc))
+                  2->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.ps))
+                  3->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.xbox))
+                  4->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.ios))
+                  8->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.android))
+                  5->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.apple))
+                  6->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.linux))
+                  7->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.nintendo))
+                  9->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.atari))
+                  10->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.comodo))
+                  11->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.sega))
+                  12->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable._do))
+                  13->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.neo_geo_cd_seeklogo))
+                  14->imageView.setImageDrawable(ContextCompat.getDrawable(requireContext(),R.drawable.web))
+               }
+               binding.icons.addView(imageView)
+            }
+         }
+
+         var textView: TextView
+         for (i in 0..<it.ratings?.size!!) {
+            textView = (binding.ratings[i] as TextView)
+            textView.text = it.ratings[i].title?.replaceFirstChar {first->
+               if (first.isLowerCase()) first.titlecase(Locale.getDefault()) else it.toString()
+            }
+            textView.text = "${textView.text} ${it.ratings[i].count}"
+         }
       }
-      println(viewModel.hashCode())
    }
 
    override fun onDestroyView() {
       super.onDestroyView()
       _binding = null
+   }
+   private fun formatString(dateString: String): String {
+      val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+      val outputFormat = SimpleDateFormat("MMM dd,yyyy", Locale.getDefault())
+      val date: Date
+      try {
+         date = inputFormat.parse(dateString)!!
+      } catch (e: Exception) {
+         return "unknown date"
+      }
+      return outputFormat.format(date)
    }
 }
 
